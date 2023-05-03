@@ -1,0 +1,112 @@
+#!/bin/bash
+
+if [ -z $1 ]; then 
+
+    command="tmux new ";
+    name="${TMUX_SESSION_NAME}"
+
+#===============================================================================
+# Session-Name
+#===============================================================================
+    if [ -n "${TMUX_SESSION_NAME}" ]; then 
+        echo "sessionname: '${TMUX_SESSION_NAME}'"
+        command=$command"-s'${TMUX_SESSION_NAME}' "
+    else
+        echo "no sessioname"
+    fi
+
+#===============================================================================
+# Alway open an editor
+#===============================================================================
+    command=$command" 'nvim' \; rename-window 'editor' "
+
+#===============================================================================
+# Function to create the different Window Groups 
+#===============================================================================
+function makeAWindow {
+
+    echo "call makeAWindow" $1 $2
+
+    cmd="";
+    x=1
+    eval 'ev="${TMUX_SESSION_'$1'_'$x'}"' 
+    while [ -n "$ev" ]; do 
+        echo $2" command $x: $ev"
+
+        if [ $x -eq 1 ]; then
+            cmd=$cmd" \; new-window '$ev' \; rename-window '"$2"'"    
+        else
+            cmd=$cmd" \; split-pane '$ev'"    
+        fi
+
+        ((x+=1))
+        eval 'ev="${TMUX_SESSION_'$1'_'$x'}"' 
+    done 
+
+    if [ $x -gt 1 ]; then
+        eval 'ev="${TMUX_SESSION_'$1'_VERTICAL}"'
+        if [ -z "$ev" ]; then
+            cmd=$cmd" \; select-layout even-vertical"
+        else
+            cmd=$cmd" \; select-layout even-horizontal"
+        fi
+    fi
+
+    command=$command$cmd
+}
+
+
+#===============================================================================
+# Build all the other windows
+#===============================================================================
+makeAWindow "LOG" "logs" 
+makeAWindow "SERVER" "server" 
+makeAWindow "DATABASE" "database" 
+
+
+#===============================================================================
+# select the editor window and start tmuxing
+#===============================================================================
+    command=$command" \; select-window -t 'editor' "
+    eval $command
+    #echo $command
+
+else
+#===============================================================================
+# help text, if the function is called with any kind of parameter
+#===============================================================================
+    echo "usage: 
+    To give your session a custom name.
+        export TMUX_SESSION_NAME=[what to name the tmux session]
+
+    Each of the follwoing windows can contain as many panes, as you like.
+    just make sure the numbering from 1 to x is without breaks
+
+    To open a logging window with x panes:
+        export TMUX_SESSION_LOG_1=[command for first log]
+        ...
+        export TMUX_SESSION_LOG_x=[command for the xth log]
+       
+    To open a server window with x panes:
+        export TMUX_SESSION_SERVER_1=[command for first server]
+        ...
+        export TMUX_SESSION_SERVER_x=[command for the xth server]
+
+    To open a database window with x panes:
+        export TMUX_SESSION_DATABASE_1=[command for first database]
+        ...
+        export TMUX_SESSION_DATABASE_x=[command for the xth database]
+   
+    To any of these 3 into a vertical layout define 
+
+        export TMUX_SESSION_LOG_VERTICAL=1
+        export TMUX_SESSION_SERVER_VERTICAL=1
+        export TMUX_SESSION_DATABASE_VERTICAL=1
+    resepectively.
+
+    after everything is set up. call 
+
+        $0
+    "
+fi
+
