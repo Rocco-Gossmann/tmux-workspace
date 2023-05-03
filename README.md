@@ -8,8 +8,8 @@ put the `tmux-workspace` executable/script into a folder available in your $PATH
 1.) create a shellscript
 
 2.) inside of that script 
-    - define exported environment vars (call `tmux-workspace` -h for more info, what vars are available)
-    - end the script with `tmux-workspace`
+- define exported environment vars (call `tmux-workspace` -h for more info, what vars are available)
+- end the script with `tmux-workspace`
 
 3.) make the script executable
 
