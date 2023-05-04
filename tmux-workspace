@@ -2,23 +2,39 @@
 
 if [ -z $1 ]; then 
 
+    editor='nvim'
+
     command="tmux new ";
     name="${TMUX_SESSION_NAME}"
+
+    echo $TMUX
 
 #===============================================================================
 # Session-Name
 #===============================================================================
     if [ -n "${TMUX_SESSION_NAME}" ]; then 
-        echo "sessionname: '${TMUX_SESSION_NAME}'"
         command=$command"-s'${TMUX_SESSION_NAME}' "
     else
         echo "no sessioname"
     fi
+    command=$command" "
+
+#===============================================================================
+# Handhle nesting
+#===============================================================================
+    command=$command" -d '$editor'"
+    eval $command
+
+    session_name=`tmux ls -F '#{session_created} #{session_name}' | sort | tail -n 1 | awk -F' ' '{print $2}'`
+    echo "session created: " $session_name
+
+    command='tmux ' 
+
 
 #===============================================================================
 # Alway open an editor
 #===============================================================================
-    command=$command" 'nvim' \; rename-window 'editor' "
+    command=$command" rename-window -t '$session_name' 'editor' "
 
 #===============================================================================
 # Function to create the different Window Groups 
@@ -34,9 +50,9 @@ function makeAWindow {
         echo $2" command $x: $ev"
 
         if [ $x -eq 1 ]; then
-            cmd=$cmd" \; new-window '$ev' \; rename-window '"$2"'"    
+            cmd=$cmd" \; new-window -t '$session_name' '$ev' \; rename-window -t '$session_name' '"$2"'"    
         else
-            cmd=$cmd" \; split-pane '$ev'"    
+            cmd=$cmd" \; split-pane -t '$session_name' '$ev'"    
         fi
 
         ((x+=1))
@@ -46,9 +62,9 @@ function makeAWindow {
     if [ $x -gt 1 ]; then
         eval 'ev="${TMUX_SESSION_'$1'_VERTICAL}"'
         if [ -z "$ev" ]; then
-            cmd=$cmd" \; select-layout even-vertical"
+            cmd=$cmd" \; select-layout -t '$session_name' even-vertical"
         else
-            cmd=$cmd" \; select-layout even-horizontal"
+            cmd=$cmd" \; select-layout -t '$session_name' even-horizontal"
         fi
     fi
 
@@ -67,9 +83,16 @@ makeAWindow "DATABASE" "database"
 #===============================================================================
 # select the editor window and start tmuxing
 #===============================================================================
-    command=$command" \; select-window -t 'editor' "
-    eval $command
+    command=$command" \; select-window -t '$session_name:editor' "
+
     #echo $command
+    eval $command
+
+    if [ -n "${TMUX}" ]; then
+        tmux switch-client -t "${session_name}"
+    else
+        tmux attach -t "${session_name}"
+    fi
 
 else
 #===============================================================================
