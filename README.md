@@ -5,20 +5,29 @@ A commandline tool meant to make opening a multi-window project in tmux easy
 put the `tmux-workspace` executable/script into a folder available in your $PATH.
 
 ## how to use it
-1.) create a shellscript
+Calling `tmux-workspace` without any parameters results in this help output.
+```shell
+tmux-workspace  [-e editorcommand] [-n sessionname]  
+                [-lv] [-l logcommand1] [-l logcommand2]... 
+                [-sv] [-s servercommand1] [-s servercommand2]...
+                [-dv] [-d databasecommand1] [-d databasecommand2]...
 
-2.) inside of that script 
-- define exported environment vars (call `tmux-workspace` -h for more info, what vars are available)
-- end the script with `tmux-workspace`
+Parameters:
+    -e  main command (must be a continous running programm. DEFAULT: your shell) 
 
-3.) make the script executable
+    -n  the name of your session DEFAULT: given by tmux
 
-4.) Run the script
+    -lv if set, the 'logs' windows will be arranged verticaly, else horizontaly
+    -l  a command executed in the 'logs' window 
+        all subsequent -l parameters will be added as panes
 
-5.) Done
+    -sv if set, the 'servers' windows will be arranged verticaly, else horizontaly
+    -s  a command executed in the 'servers' window 
+        all subsequent -s parameters will be added as panes
 
-
-https://user-images.githubusercontent.com/127580387/235834355-e673f743-e52b-40fd-8e4d-ae9dd37283d1.mp4
-
+    -dv if set, the 'databases' windows will be arranged verticaly, else horizontaly
+    -d  a command executed in the 'databases' window 
+        all subsequent -d parameters will be added as panes
+```
 
 
