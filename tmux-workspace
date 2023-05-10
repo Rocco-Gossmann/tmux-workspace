@@ -1,196 +1,231 @@
 #!/bin/bash
 
+showhelp=0
+
+function isCtlArg {
+    local me=`grep -e ^- <<< "$1"`
+    local ret=0
+
+    if [ "$me" == '' ]; then
+        echo "nope"
+    else
+        echo "yep"
+    fi
+}
+
 if [ $# != 0 ]; then 
 
     echo " "
-    echo "--------------------------------------------";
 
-    sname=""
     seditor="${SHELL}"
+    layout="h"
 
-    logs_layout="h"
-    server_layout="h"
-    database_layout="h"
-
-    first=1
+    first=2
     cnt=$#
-    mode=0
-    declare -a slogs
-    declare -a sservers
-    declare -a sdatabases
 
-#===============================================================================
-# Parse Arguments
-#===============================================================================
-    for (( i=$first; i<=$cnt; i++ )); do
-        eval "arg=\"\${$i}\""
-        # echo ">  arg $i is: $arg"
-
-        if [[ $mode == 0 ]]; then
-
-            if [[ $arg == "-n" ]]; then
-                ((mode=1))
-
-            elif [[ $arg == "-e" ]]; then
-                ((mode=2))
-
-            elif [[ $arg == "-l" ]]; then
-                ((mode=3))
-
-            elif [[ $arg == "-s" ]]; then
-                ((mode=4))
-
-            elif [[ $arg == "-d" ]]; then
-                ((mode=5))
-
-            elif [[ $arg == "-lv" ]]; then
-                echo  "Logs layout => vertical"
-                logs_layout="v"
-
-            elif [[ $arg == "-sv" ]]; then
-                echo "Servers layout => vertical"
-                servers_layout="v"
-                
-            elif [[ $arg == "-dv" ]]; then
-                echo "Databases layout => vertical"
-                databases_layout="v"
-            fi
-
-        elif [[ $mode == 1 ]]; then
-            sname="$arg"     
-            echo "Name => $sname"
-            ((mode=0))
-
-        elif [[ $mode == 2 ]]; then
-            seditor="$arg"     
-            echo "Editor => $seditor"
-            ((mode=0))
-
-        elif [[ $mode == 3 ]]; then
-            slogs=("${slogs[@]}" "$arg")
-            echo "Add Log => ${arg}"
-            ((mode=0))
-
-        elif [[ $mode == 4 ]]; then
-            sservers=("${sservers[@]}" "$arg")
-            echo "Add Server => ${arg}"
-            ((mode=0))
-
-        elif [[ $mode == 5 ]]; then
-            sdatabases=("${sdatabases[@]}" "$arg")
-            echo "Add Database => ${arg}"
-            ((mode=0))
-
-        fi
-    done
-
-#===============================================================================
-# Function to create the different Window Groups 
-#===============================================================================
-function makeAWindow {
-
-#    echo "call makeAWindow " $@
-#
-    cmd="";
-    panecnt=0
-
-    for (( i=2; i<=$#; i++ )); do
-        eval "ev=\$$i";
-        if [[ -n "$ev" ]]; then
-            if [ $i -eq 2 ]; then
-                cmd=$cmd"\; new-window -t '$session_name' '$ev' \; rename-window -t '$session_name' '"$1"' "
-            else
-                cmd=$cmd"\; split-pane -t '$session_name' '$ev' "    
-            fi
-
-            ((panecnt++))
-        fi
-    done
+    argptr=1
     
-    if [[ $panecnt -gt 1 ]]; then
-        eval 'ev="$'$1'_layout"'
-        if [ "$ev" == "v" ]; then
-            cmd=$cmd" \; select-layout -t '$session_name:$1' even-vertical"
-        else
-            cmd=$cmd" \; select-layout -t '$session_name:$1' even-horizontal"
-        fi
-    fi
-
-    command=$command$cmd
-}
-
-#===============================================================================
-# build command
-#===============================================================================
-    echo "--------------------------------------------";
-    echo "lets go !"
-
     command="tmux new ";
-    if [ -n "${sname}" ]; then 
-        command=$command"-s'${sname}' "
+
+    if [ $(isCtlArg "$1") == "nope" ]; then 
+        command=$command"-s'$1' "
+        argptr=2
     fi
 
     # create Session
     #--------------------------------------------------------------------------
+    echo "--------------------------------------------";
+    echo " start session "
+    echo "--------------------------------------------";
     command=$command"-d '$seditor' "
-#    echo $command
-    eval $command
+    echo $command
+#    eval $command
 
     session_name=`tmux ls -F '#{session_created} #{session_name}' | sort | tail -n 1 | cut -d ' ' -f 2-`
-#    echo "session created: " $session_name
+    echo "session created: " $session_name
 
     command='tmux ' 
 
-    # rename editor
-    #--------------------------------------------------------------------------
-    command=$command" rename-window -t '$session_name' 'editor' "
-
-    # add all the windows
-    #--------------------------------------------------------------------------
-    makeAWindow "logs" "${slogs[@]}"
-    makeAWindow "servers" "${sservers[@]}"
-    makeAWindow "databases" "${sdatabases[@]}"
+    echo "--------------------------------------------";
+    echo " process commands "
+    echo "--------------------------------------------";
 
 
-    # Select the Editor Window and start tmuxing
-    #--------------------------------------------------------------------------
-    
-    command=$command" \; select-window -t '$session_name:editor' "
 
+#===============================================================================
+# Parse Arguments
+#===============================================================================
+#   for (( i=$first; i<=$cnt; i++ )); do
+#       eval "arg=\"\${$i}\""
+#       # echo ">  arg $i is: $arg"
+
+#       if [[ $mode == 0 ]]; then
+
+#           if [[ $arg == "-n" ]]; then
+#               ((mode=1))
+
+#           elif [[ $arg == "-e" ]]; then
+#               ((mode=2))
+
+#           elif [[ $arg == "-l" ]]; then
+#               ((mode=3))
+
+#           elif [[ $arg == "-s" ]]; then
+#               ((mode=4))
+
+#           elif [[ $arg == "-d" ]]; then
+#               ((mode=5))
+
+#           elif [[ $arg == "-lv" ]]; then
+#               echo  "Logs layout => vertical"
+#               logs_layout="v"
+
+#           elif [[ $arg == "-sv" ]]; then
+#               echo "Servers layout => vertical"
+#               servers_layout="v"
+#               
+#           elif [[ $arg == "-dv" ]]; then
+#               echo "Databases layout => vertical"
+#               databases_layout="v"
+#           fi
+
+#       elif [[ $mode == 1 ]]; then
+#           sname="$arg"     
+#           echo "Name => $sname"
+#           ((mode=0))
+
+#       elif [[ $mode == 2 ]]; then
+#           seditor="$arg"     
+#           echo "Editor => $seditor"
+#           ((mode=0))
+
+#       elif [[ $mode == 3 ]]; then
+#           slogs=("${slogs[@]}" "$arg")
+#           echo "Add Log => ${arg}"
+#           ((mode=0))
+
+#       elif [[ $mode == 4 ]]; then
+#           sservers=("${sservers[@]}" "$arg")
+#           echo "Add Server => ${arg}"
+#           ((mode=0))
+
+#       elif [[ $mode == 5 ]]; then
+#           sdatabases=("${sdatabases[@]}" "$arg")
+#           echo "Add Database => ${arg}"
+#           ((mode=0))
+
+#       fi
+#   done
+
+#===============================================================================
+# Function to create the different Window Groups 
+#===============================================================================
+#unction makeAWindow {
+
+#    echo "call makeAWindow " $@
+#
+#   cmd="";
+#   panecnt=0
+
+#   for (( i=2; i<=$#; i++ )); do
+#       eval "ev=\$$i";
+#       if [[ -n "$ev" ]]; then
+#           if [ $i -eq 2 ]; then
+#               cmd=$cmd"\; new-window -t '$session_name' '$ev' \; rename-window -t '$session_name' '"$1"' "
+#           else
+#               cmd=$cmd"\; split-pane -t '$session_name' '$ev' "    
+#           fi
+
+#           ((panecnt++))
+#       fi
+#   done
+#   
+#   if [[ $panecnt -gt 1 ]]; then
+#       eval 'ev="$'$1'_layout"'
+#       if [ "$ev" == "v" ]; then
+#           cmd=$cmd" \; select-layout -t '$session_name:$1' even-vertical"
+#       else
+#           cmd=$cmd" \; select-layout -t '$session_name:$1' even-horizontal"
+#       fi
+#   fi
+
+#   command=$command$cmd
+#
+
+#===============================================================================
+# build command
+#===============================================================================
+#   echo "--------------------------------------------";
+#   echo "lets go !"
+
+#   command="tmux new ";
+#   if [ -n "${sname}" ]; then 
+#       command=$command"-s'${sname}' "
+#   fi
+
+#   # create Session
+#   #--------------------------------------------------------------------------
+#   command=$command"-d '$seditor' "
 #    echo $command
-    eval $command
+#   eval $command
 
-    if [ -n "${TMUX}" ]; then
-        tmux switch-client -t "${session_name}"
-    else
-        tmux attach -t "${session_name}"
-    fi
+#   session_name=`tmux ls -F '#{session_created} #{session_name}' | sort | tail -n 1 | cut -d ' ' -f 2-`
+#    echo "session created: " $session_name
+
+#   command='tmux ' 
+
+#   # rename editor
+#   #--------------------------------------------------------------------------
+#   command=$command" rename-window -t '$session_name' 'editor' "
+
+#   # add all the windows
+#   #--------------------------------------------------------------------------
+#   makeAWindow "logs" "${slogs[@]}"
+#   makeAWindow "servers" "${sservers[@]}"
+#   makeAWindow "databases" "${sdatabases[@]}"
+
+
+#   # Select the Editor Window and start tmuxing
+#   #--------------------------------------------------------------------------
+#   command=$command" \; select-window -t '$session_name:editor' "
+
+    echo $command
+#   eval $command
+
+#   if [ -n "${TMUX}" ]; then
+#       tmux switch-client -t "${session_name}"
+#   else
+#       tmux attach -t "${session_name}"
+#   fi
 
 else
+
 #===============================================================================
 # help text, if the function is called with any kind of parameter
 #===============================================================================
-echo "usage: $(basename $0)   [-e editorcommand] [-n sessionname]  
-                     [-lv] [-l logcommand1] [-l logcommand2]... 
-                     [-sv] [-s servercommand1] [-s servercommand2]...
-                     [-dv] [-d databasecommand1] [-d databasecommand2]...
+echo "usage: $(basename $0) [sessionname] [-v] [command1] [command2] ...
+j
+                     [-w windowname1] 
+                        [-v] [command1] [command2]... 
+
+                     [-w windowname2] 
+                        [-v] [command1] [command2]... 
 
     Parameters:
-        -e  main command (must be a continous running programm. DEFAULT: your shell) 
-
-        -n  the name of your session DEFAULT: given by tmux
-
-        -lv if set, the 'logs' windows will be arranged verticaly, else horizontaly
-        -l  a command executed in the 'logs' window 
-            all subsequent -l parameters will be added as panes
-
-        -sv if set, the 'servers' windows will be arranged verticaly, else horizontaly
-        -s  a command executed in the 'servers' window 
-            all subsequent -s parameters will be added as panes
     
-        -dv if set, the 'databases' windows will be arranged verticaly, else horizontaly
-        -d  a command executed in the 'databases' window 
-            all subsequent -d parameters will be added as panes
+        sessionname     if provided, tmux will use this as session identifier
+                        (Default: given by tmux)
+
+        -w windowname   to start a new window
+
+        -v              to define, that all splits for this window should have
+                        a vertical layout (else horizontal)
+
+        command1, command2, ...
+                        the commands, that should be executed under this 
+                        specific window
+                        (If no command is given, the current shell will be used)
+
     "
 fi
 
