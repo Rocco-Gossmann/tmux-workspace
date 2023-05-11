@@ -13,6 +13,9 @@ function isCtlArg {
     fi
 }
 
+argptr=1
+
+
 if [ $# != 0 ]; then 
 
     echo " "
@@ -20,16 +23,14 @@ if [ $# != 0 ]; then
     seditor="${SHELL}"
     layout="h"
 
-    first=2
+    first=1
     cnt=$#
 
-    argptr=1
-    
     command="tmux new ";
 
     if [ $(isCtlArg "$1") == "nope" ]; then 
         command=$command"-s'$1' "
-        argptr=2
+        ((first=2)) 
     fi
 
     # create Session
@@ -39,7 +40,7 @@ if [ $# != 0 ]; then
     echo "--------------------------------------------";
     command=$command"-d '$seditor' "
     echo $command
-#    eval $command
+    #    eval $command
 
     session_name=`tmux ls -F '#{session_created} #{session_name}' | sort | tail -n 1 | cut -d ' ' -f 2-`
     echo "session created: " $session_name
@@ -50,7 +51,65 @@ if [ $# != 0 ]; then
     echo " process commands "
     echo "--------------------------------------------";
 
+    panes=0
+    mode=0      # 0 = set window name
+    layout="h"
 
+    cnt=$#
+
+    for (( i=$argptr; i<=$cnt; i++ )); do
+
+        eval "arg=\"\${$i}\""
+        echo ">   arg $i is: $arg"
+
+        if [[ $(isCtlArg "$arg") == "yep" ]]; then 
+            echo ">>  is Ctl command"
+
+            if [[ "$arg" == "-w" ]]; then
+                echo ">>> create new window" 
+               
+                if [[ -n panes ]]; then 
+                    if [[ "$layout" == "v" ]]; then
+                        command=$command" \; select-layout -t '$session_name' even-vertical"
+                    else
+                        command=$command" \; select-layout -t '$session_name' even-horizontal"
+                    fi
+                fi
+
+                command=$command" \; new-window -t '$session_name' '$editor' "
+                ((mode=0))
+                ((panes=0))
+                layout="h"
+
+            elif [[ "$arg" == "-v" ]]; then
+                layout="v"
+
+            elif [[ "$arg" == "-c" ]]; then
+                ((mode=1))
+
+            else
+                echo ">> unknow command"
+            fi
+        else
+            if [[ $mode == 0 ]]; then
+                echo ">>> Rename window"
+                command=$command" \; rename-window -t '$session_name' '"$arg"'"
+            elif [[ $mode == 1 ]]; then
+                if [[ -z panes ]]; then
+                    command=$command" \; respawn-pane -k -t '$session_name:' '"$arg"'"                                              
+                else
+                    command=$command"\; split-pane -t '$session_name' '$arg' "    
+                fi
+                ((panes++))
+            else
+                echo ">>> unknown mode $mode"
+            fi
+        fi
+    done
+    
+    echo "-----------------------------------"
+    echo "lets go"
+    echo $command
 
 #===============================================================================
 # Parse Arguments
@@ -189,7 +248,7 @@ if [ $# != 0 ]; then
 #   #--------------------------------------------------------------------------
 #   command=$command" \; select-window -t '$session_name:editor' "
 
-    echo $command
+echo $command
 #   eval $command
 
 #   if [ -n "${TMUX}" ]; then
@@ -203,29 +262,29 @@ else
 #===============================================================================
 # help text, if the function is called with any kind of parameter
 #===============================================================================
-echo "usage: $(basename $0) [sessionname] [-v] [command1] [command2] ...
+echo "usage: $(basename $0) [sessionname] [-v] [-c command1 command2] ...
 j
-                     [-w windowname1] 
-                        [-v] [command1] [command2]... 
+[-w windowname1] 
+[-v] [-c command1 command2]... 
 
-                     [-w windowname2] 
-                        [-v] [command1] [command2]... 
+[-w windowname2] 
+[-v] [-c command1 command2]... 
 
-    Parameters:
-    
-        sessionname     if provided, tmux will use this as session identifier
-                        (Default: given by tmux)
+Parameters:
 
-        -w windowname   to start a new window
+sessionname     if provided, tmux will use this as session identifier
+(Default: given by tmux)
 
-        -v              to define, that all splits for this window should have
-                        a vertical layout (else horizontal)
+-w windowname   to start a new window
 
-        command1, command2, ...
-                        the commands, that should be executed under this 
-                        specific window
-                        (If no command is given, the current shell will be used)
+-v              to define, that all splits for this window should have
+a vertical layout (else horizontal)
 
-    "
+command1, command2, ...
+the commands, that should be executed under this 
+specific window
+(If no command is given, the current shell will be used)
+
+"
 fi
 
