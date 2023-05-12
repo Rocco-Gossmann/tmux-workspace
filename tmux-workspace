@@ -13,12 +13,9 @@ function isCtlArg {
     fi
 }
 
-argptr=1
-
-
 if [ $# != 0 ]; then 
 
-    echo " "
+    # echo " "
 
     seditor="${SHELL}"
     layout="h"
@@ -35,21 +32,21 @@ if [ $# != 0 ]; then
 
     # create Session
     #--------------------------------------------------------------------------
-    echo "--------------------------------------------";
-    echo " start session "
-    echo "--------------------------------------------";
+    # echo "--------------------------------------------";
+    # echo " start session "
+    # echo "--------------------------------------------";
     command=$command"-d '$seditor' "
-    echo $command
-    #    eval $command
+    # echo $command
+    eval $command
 
     session_name=`tmux ls -F '#{session_created} #{session_name}' | sort | tail -n 1 | cut -d ' ' -f 2-`
-    echo "session created: " $session_name
+    # echo "session created: " $session_name
 
     command='tmux ' 
 
-    echo "--------------------------------------------";
-    echo " process commands "
-    echo "--------------------------------------------";
+    # echo "--------------------------------------------";
+    # echo " process commands "
+    # echo "--------------------------------------------";
 
     panes=0
     mode=0      # 0 = set window name
@@ -57,22 +54,24 @@ if [ $# != 0 ]; then
 
     cnt=$#
 
-    for (( i=$argptr; i<=$cnt; i++ )); do
+    for (( i=$first; i<=$cnt; i++ )); do
 
         eval "arg=\"\${$i}\""
-        echo ">   arg $i is: $arg"
+        # echo ">   arg $i is: $arg"
 
         if [[ $(isCtlArg "$arg") == "yep" ]]; then 
-            echo ">>  is Ctl command"
+            # echo ">>  is Ctl command"
 
             if [[ "$arg" == "-w" ]]; then
-                echo ">>> create new window" 
-               
-                if [[ -n panes ]]; then 
+                # echo ">>> create new window" 
+                if [[ $panes -gt 1 ]]; then 
+                    # echo ">>> has $panes panes"
                     if [[ "$layout" == "v" ]]; then
-                        command=$command" \; select-layout -t '$session_name' even-vertical"
-                    else
+                        # echo ">>> layout vertical"
                         command=$command" \; select-layout -t '$session_name' even-horizontal"
+                    else
+                        # echo ">>> layout horizontal"
+                        command=$command" \; select-layout -t '$session_name' even-vertical"
                     fi
                 fi
 
@@ -86,204 +85,68 @@ if [ $# != 0 ]; then
 
             elif [[ "$arg" == "-c" ]]; then
                 ((mode=1))
-
-            else
-                echo ">> unknow command"
             fi
         else
             if [[ $mode == 0 ]]; then
-                echo ">>> Rename window"
+                # echo ">>> Rename window"
                 command=$command" \; rename-window -t '$session_name' '"$arg"'"
             elif [[ $mode == 1 ]]; then
-                if [[ -z panes ]]; then
+                if [[ $panes == 0 ]]; then
                     command=$command" \; respawn-pane -k -t '$session_name:' '"$arg"'"                                              
                 else
                     command=$command"\; split-pane -t '$session_name' '$arg' "    
                 fi
                 ((panes++))
-            else
-                echo ">>> unknown mode $mode"
             fi
         fi
     done
     
-    echo "-----------------------------------"
-    echo "lets go"
-    echo $command
+    # echo "--------------------------------------------"
+    # echo " Lets Gooooo !! "
+    # echo "--------------------------------------------"
+    # echo $command
+    
+    command=$command" \; select-window -t '$session_name:0' "
 
-#===============================================================================
-# Parse Arguments
-#===============================================================================
-#   for (( i=$first; i<=$cnt; i++ )); do
-#       eval "arg=\"\${$i}\""
-#       # echo ">  arg $i is: $arg"
+    # echo $command
+    eval $command
 
-#       if [[ $mode == 0 ]]; then
-
-#           if [[ $arg == "-n" ]]; then
-#               ((mode=1))
-
-#           elif [[ $arg == "-e" ]]; then
-#               ((mode=2))
-
-#           elif [[ $arg == "-l" ]]; then
-#               ((mode=3))
-
-#           elif [[ $arg == "-s" ]]; then
-#               ((mode=4))
-
-#           elif [[ $arg == "-d" ]]; then
-#               ((mode=5))
-
-#           elif [[ $arg == "-lv" ]]; then
-#               echo  "Logs layout => vertical"
-#               logs_layout="v"
-
-#           elif [[ $arg == "-sv" ]]; then
-#               echo "Servers layout => vertical"
-#               servers_layout="v"
-#               
-#           elif [[ $arg == "-dv" ]]; then
-#               echo "Databases layout => vertical"
-#               databases_layout="v"
-#           fi
-
-#       elif [[ $mode == 1 ]]; then
-#           sname="$arg"     
-#           echo "Name => $sname"
-#           ((mode=0))
-
-#       elif [[ $mode == 2 ]]; then
-#           seditor="$arg"     
-#           echo "Editor => $seditor"
-#           ((mode=0))
-
-#       elif [[ $mode == 3 ]]; then
-#           slogs=("${slogs[@]}" "$arg")
-#           echo "Add Log => ${arg}"
-#           ((mode=0))
-
-#       elif [[ $mode == 4 ]]; then
-#           sservers=("${sservers[@]}" "$arg")
-#           echo "Add Server => ${arg}"
-#           ((mode=0))
-
-#       elif [[ $mode == 5 ]]; then
-#           sdatabases=("${sdatabases[@]}" "$arg")
-#           echo "Add Database => ${arg}"
-#           ((mode=0))
-
-#       fi
-#   done
-
-#===============================================================================
-# Function to create the different Window Groups 
-#===============================================================================
-#unction makeAWindow {
-
-#    echo "call makeAWindow " $@
-#
-#   cmd="";
-#   panecnt=0
-
-#   for (( i=2; i<=$#; i++ )); do
-#       eval "ev=\$$i";
-#       if [[ -n "$ev" ]]; then
-#           if [ $i -eq 2 ]; then
-#               cmd=$cmd"\; new-window -t '$session_name' '$ev' \; rename-window -t '$session_name' '"$1"' "
-#           else
-#               cmd=$cmd"\; split-pane -t '$session_name' '$ev' "    
-#           fi
-
-#           ((panecnt++))
-#       fi
-#   done
-#   
-#   if [[ $panecnt -gt 1 ]]; then
-#       eval 'ev="$'$1'_layout"'
-#       if [ "$ev" == "v" ]; then
-#           cmd=$cmd" \; select-layout -t '$session_name:$1' even-vertical"
-#       else
-#           cmd=$cmd" \; select-layout -t '$session_name:$1' even-horizontal"
-#       fi
-#   fi
-
-#   command=$command$cmd
-#
-
-#===============================================================================
-# build command
-#===============================================================================
-#   echo "--------------------------------------------";
-#   echo "lets go !"
-
-#   command="tmux new ";
-#   if [ -n "${sname}" ]; then 
-#       command=$command"-s'${sname}' "
-#   fi
-
-#   # create Session
-#   #--------------------------------------------------------------------------
-#   command=$command"-d '$seditor' "
-#    echo $command
-#   eval $command
-
-#   session_name=`tmux ls -F '#{session_created} #{session_name}' | sort | tail -n 1 | cut -d ' ' -f 2-`
-#    echo "session created: " $session_name
-
-#   command='tmux ' 
-
-#   # rename editor
-#   #--------------------------------------------------------------------------
-#   command=$command" rename-window -t '$session_name' 'editor' "
-
-#   # add all the windows
-#   #--------------------------------------------------------------------------
-#   makeAWindow "logs" "${slogs[@]}"
-#   makeAWindow "servers" "${sservers[@]}"
-#   makeAWindow "databases" "${sdatabases[@]}"
-
-
-#   # Select the Editor Window and start tmuxing
-#   #--------------------------------------------------------------------------
-#   command=$command" \; select-window -t '$session_name:editor' "
-
-echo $command
-#   eval $command
-
-#   if [ -n "${TMUX}" ]; then
-#       tmux switch-client -t "${session_name}"
-#   else
-#       tmux attach -t "${session_name}"
-#   fi
-
+    if [ -n "${TMUX}" ]; then
+        tmux switch-client -t "${session_name}"
+    else
+        tmux attach -t "${session_name}"
+    fi
+ 
 else
 
 #===============================================================================
 # help text, if the function is called with any kind of parameter
 #===============================================================================
-echo "usage: $(basename $0) [sessionname] [-v] [-c command1 command2] ...
-j
-[-w windowname1] 
-[-v] [-c command1 command2]... 
+echo "usage: $(basename $0) [sessionname] [windowname] [-v] [-c command1 command2] ...
 
-[-w windowname2] 
-[-v] [-c command1 command2]... 
+                    [-w windowname1] 
+                        [-v] [-c command1 command2]... 
 
-Parameters:
+                    [-w windowname2] 
+                        [-v] [-c command1 command2]... 
 
-sessionname     if provided, tmux will use this as session identifier
-(Default: given by tmux)
+       Parameters:
 
--w windowname   to start a new window
+            sessionname     if provided, tmux will use this as session identifier
+                            (Default: given by tmux)
 
--v              to define, that all splits for this window should have
-a vertical layout (else horizontal)
+            windowname      defines, what the first window in the new session 
+                            is called (Default: given by tmux)
 
-command1, command2, ...
-the commands, that should be executed under this 
-specific window
-(If no command is given, the current shell will be used)
+            -w windowname   to start a new window
+
+            -v              to define, that all splits for this window should have
+                            a vertical layout (else horizontal)
+
+            command1, command2, ...
+                            the commands, that should be executed under this 
+                            specific window
+                            0(If no command is given, the current shell will be used)
 
 "
 fi

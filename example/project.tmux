@@ -1,15 +1,15 @@
 #!/bin/bash
 
-tmux-workspace -n "this is a test" \
-    -e "nvim" \
+../tmux-workspace "this is a test" "editor" -c "nvim" \
+    -w "logs" -c \
+    "tail -f ./testlog1.txt" \
+    "tail -f ./testlog2.txt" \
+    "tail -f ./testlog3.txt" \
+    "tail -f ./testlog4.txt" \
     \
-    -l "tail -f ./testlog1.txt" \
-    -l "tail -f ./testlog2.txt" \
-    -l "tail -f ./testlog3.txt" \
-    -l "tail -f ./testlog4.txt" \
+    -w "servers" -v -c \
+    "tail -f ./testlog1.txt" \
+    "tail -f ./testlog2.txt" \
     \
-    -sv \
-    -s "tail -f ./testlog1.txt" \
-    -s "tail -f ./testlog2.txt" \
-    \
-    -d "tail -f ./testlog1.txt" 
+    -w "databases" -c \
+    "tail -f ./testlog1.txt" \
