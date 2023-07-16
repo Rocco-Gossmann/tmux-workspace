@@ -36,6 +36,14 @@ usage: tmux-workspace [sessionname] [windowname] [-v] [-c command1 command2] ...
 
 ## changelog:
 
+### Version 3.1
+    - bugfix: When calling the command with the same session-name, as an existing one,
+              the script would attach to the wrong session if it wasn't last in the list
+
+    - bugfix: `-v` had no effect on the last created Window
+
+    - bugfix: if the last opened window had multiple panes, they would not be evenly split (Issue #1)
+
 ### Version 3.0
     - windows are now created on the fly with the `-w windowname` parameter.
       (instead of being locked into only having 3 set windows)
