@@ -27,6 +27,7 @@ if [ $# != 0 ]; then
 
     if [ $(isCtlArg "$1") == "nope" ]; then 
         command=$command"-s'$1' "
+        session_name="$1"
         ((first=2)) 
     fi
 
@@ -39,8 +40,10 @@ if [ $# != 0 ]; then
     # echo $command
     eval $command
 
-    session_name=`tmux ls -F '#{session_created} #{session_name}' | sort | tail -n 1 | cut -d ' ' -f 2-`
-    # echo "session created: " $session_name
+    if [[ -z ${session_name} ]]; then 
+        session_name=`tmux ls -F '#{session_created} #{session_name}' | sort | tail -n 1 | cut -d ' ' -f 2-`
+        # echo "session created: " $session_name
+    fi
 
     command='tmux ' 
 
