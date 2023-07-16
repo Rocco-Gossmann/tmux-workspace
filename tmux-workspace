@@ -104,6 +104,17 @@ if [ $# != 0 ]; then
         fi
     done
     
+    if [[ $panes -gt 1 ]]; then 
+        # echo ">>> has $panes panes"
+        if [[ "$layout" == "v" ]]; then
+            # echo ">>> layout vertical"
+            command=$command" \; select-layout -t '$session_name' even-horizontal"
+        else
+            # echo ">>> layout horizontal"
+            command=$command" \; select-layout -t '$session_name' even-vertical"
+        fi
+    fi
+
     # echo "--------------------------------------------"
     # echo " Lets Gooooo !! "
     # echo "--------------------------------------------"
