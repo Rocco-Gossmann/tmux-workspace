@@ -40,6 +40,9 @@ usage: tmux-workspace [sessionname] [windowname] [-v] [-c command1 command2] ...
 
 ## changelog:
 
+### Version 5.1
+    - fix: multiple openings of the same workspace would stack up
+
 ### Version 5.0
     - feat: added `tmux-extractwindow` script.
       (moves the currently active Window into its own, new Session)
